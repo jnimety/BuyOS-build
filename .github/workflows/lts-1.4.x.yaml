@@ -49,7 +49,7 @@ jobs:
           path: .
           sparse-checkout: |
             custom
-  
+
       - name: Format version
         id: version
         shell: bash
@@ -58,7 +58,7 @@ jobs:
           VYOS_VERSION=${VYOS_TAG%-*}
           echo "vyos-version=${VYOS_VERSION}" >> "$GITHUB_OUTPUT"
           echo "vyos-version-sanitized=${VYOS_VERSION//./_}" >> "$GITHUB_OUTPUT"
-  
+
       - name: Increment build number
         id: buildnumber
         uses: action-pack/increment@v2
@@ -115,19 +115,19 @@ jobs:
             vyos-build/packages/linux-kernel/*.deb
             vyos-build/packages/linux-kernel/**/*.deb
           key: ${{ github.workflow }}-v${{ steps.clone-vyos.outputs.vyos_kernel_version }}
-  
+
       - name: Fetch kernel sources
         working-directory: vyos-build/packages/linux-kernel
         if: steps.cache-kernel-restore.outputs.cache-hit != 'true'
         run: git clone -b v${{ steps.clone-vyos.outputs.vyos_kernel_version }} --depth 1 --single-branch https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
-  
+
       - name: Fetch linux-firmware sources
         working-directory: vyos-build/packages/linux-kernel
         if: steps.cache-kernel-restore.outputs.cache-hit != 'true'
         run: |
           firmware_tag=$(sed -n "/'name': 'linux-firmware'/ s/.*'scmCommit': '\([0-9]\{8\}\)'.*/\1/p" Jenkinsfile)
           git clone -b $firmware_tag --depth 1 --single-branch https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
-  
+
       - name: Generate kernel config
         id: generate-kernel-config
         run: |
@@ -158,20 +158,20 @@ jobs:
             echo "Merge failed."
             exit 1
           fi
-  
+
       - name: Compile kernel
         working-directory: vyos-build/packages/linux-kernel
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true'
         run: |
           sudo ./build-kernel.sh
-  
+
       - name: Compile linux firmware
         working-directory: vyos-build/packages/linux-kernel
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true'
         run: |
-          sed -i 's/\/drivers\/net//g' build-linux-firmware.sh 
+          sed -i 's/\/drivers\/net//g' build-linux-firmware.sh
           ./build-linux-firmware.sh
-  
+
       - name: Compile Accel-PPP out-of-tree module
         working-directory: vyos-build/packages/linux-kernel
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true'
@@ -180,31 +180,31 @@ jobs:
           git clone https://github.com/accel-ppp/accel-ppp.git
           cd accel-ppp && git checkout ${{ env.ACCEL_PPP_VERSION }} && cd ..
           ./build-accel-ppp.sh
-  
+
       - name: Compile Intel QAT (Quick-Assist Technology) drivers
         working-directory: vyos-build/packages/linux-kernel
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true'
         run: |
           ./build-intel-qat.sh
-  
+
       - name: Compile Jool
         working-directory: vyos-build/packages/linux-kernel
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true'
         run: |
           ./build-jool.py
-  
+
       - name: Compile Intel ixgbe
         working-directory: vyos-build/packages/linux-kernel
         if: steps.cache-kernel-restore.outputs.cache-hit != 'true'
         run: |
           ./build-intel-ixgbe.sh
-  
+
       - name: Compile Intel ixgbevf
         working-directory: vyos-build/packages/linux-kernel
         if: steps.cache-kernel-restore.outputs.cache-hit != 'true'
         run: |
           ./build-intel-ixgbevf.sh
-  
+
       - name: Compile OpenVPN-DCO
         working-directory: vyos-build/packages/linux-kernel
         if: steps.cache-kernel-restore.outputs.cache-hit != 'true'
@@ -212,26 +212,26 @@ jobs:
           rm -rf ovpn-dco
           git clone https://github.com/OpenVPN/ovpn-dco.git
           ./build-openvpn-dco.sh
-  
+
       - name: Save kernel and some of the module sources to cache
         uses: buildjet/cache/save@v3
         if: steps.generate-kernel-config.outputs.kconfig-changed == 'true' || steps.cache-kernel-restore.outputs.cache-hit != 'true'
         id: kernel-cache
         with:
           path: |
-           vyos-build/packages/linux-kernel/linux
-           vyos-build/packages/linux-kernel/jool*
-           vyos-build/packages/linux-kernel/kernel-vars
-           vyos-build/packages/linux-kernel/linux-firmware
-           vyos-build/packages/linux-kernel/*.deb
-           vyos-build/packages/linux-kernel/**/*.deb
+            vyos-build/packages/linux-kernel/linux
+            vyos-build/packages/linux-kernel/jool*
+            vyos-build/packages/linux-kernel/kernel-vars
+            vyos-build/packages/linux-kernel/linux-firmware
+            vyos-build/packages/linux-kernel/*.deb
+            vyos-build/packages/linux-kernel/**/*.deb
           key: ${{ github.workflow }}-v${{ steps.clone-vyos.outputs.vyos_kernel_version }}
-  
+
       - name: Symlink kernel
         run: |
           mkdir -p /usr/src
           ln -sv $GITHUB_WORKSPACE/vyos-build/packages/linux-kernel/linux /usr/src/linux
-  
+
       - name: "Create symbolic links for cached .deb files"
         shell: bash
         run: |
@@ -240,7 +240,7 @@ jobs:
           do
             ln -sf linux-kernel/$package ..
           done
-  
+
       - name: Build vyos Image
         working-directory: vyos-build
         shell: bash
@@ -263,8 +263,8 @@ jobs:
               --custom-package "sops" \
               --custom-package "age"
           ls -l build/
-          [[ $(ls build/${{ steps.vars.outputs.generated-iso-name }}.iso 2> /dev/null) ]] && exit 0 || exit 1 
-  
+          [[ $(ls build/${{ steps.vars.outputs.generated-iso-name }}.iso 2> /dev/null) ]] && exit 0 || exit 1
+
       - name: Rename ISO file
         shell: bash
         run: mv "./vyos-build/build/${{ steps.vars.outputs.generated-iso-name }}.iso" "./vyos-build/build/${{ steps.vars.outputs.target-iso-name }}.iso"
@@ -279,7 +279,7 @@ jobs:
           body: |
             Official VyOS Changelog:
             https://docs.vyos.io/en/latest/changelog/1.4.html
-  
+
       - name: Delete orphaned release
         if: failure()
         uses: dev-drprasad/delete-tag-and-release@5eafd8668311bf3e4d6c1e9898f32a317103de68 # v0.2.1
@@ -303,4 +303,4 @@ jobs:
         with:
           name: VYOS_LTS_${{ steps.version.outputs.vyos-version-sanitized }}_BUILD
           token: ${{ steps.app-token.outputs.token }}
-          amount: -1  
+          amount: -1
