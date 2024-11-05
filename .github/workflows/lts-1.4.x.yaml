@@ -20,6 +20,7 @@ env:
   VYOS_ARCH: amd64
   VYOS_BUILD_BY: jnimety+vyos@gmail.com
   VYOS_BUILD_TYPE: release
+  ACCEL_PPP_VERSION: 1.13.0
   # renovate: datasource=github-releases depName=getsops/sops
   SOPS_VERSION: v3.8.1
   # renovate: datasource=github-releases depName=p3lim/vyaml
@@ -177,7 +178,7 @@ jobs:
         run: |
           rm -rf accel-ppp
           git clone https://github.com/accel-ppp/accel-ppp.git
-          cd accel-ppp && git checkout 19c36e593d9b && cd ..
+          cd accel-ppp && git checkout ${{ env.ACCEL_PPP_VERSION }} && cd ..
           ./build-accel-ppp.sh
   
       - name: Compile Intel QAT (Quick-Assist Technology) drivers
